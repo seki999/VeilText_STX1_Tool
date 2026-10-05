@@ -5,93 +5,207 @@ from tkinter import filedialog, messagebox, ttk
 from veiltext_stx1_recovery import decrypt_veiltext, encrypt_veiltext
 
 
+TEXTS = {
+    "en": {
+        "window_title": "VeilText STX1 Tool",
+        "title": "VeilText STX1 Encryption + Recovery",
+        "language": "Language:",
+        "password_frame": "Password",
+        "password": "Password:",
+        "confirm": "Confirm:",
+        "show_password": "Show password",
+        "plaintext": "Plaintext",
+        "ciphertext": "STX1 Ciphertext",
+        "encrypt": "Encrypt  →",
+        "decrypt": "←  Decrypt / Recover",
+        "open_plain": "Open Plaintext",
+        "open_cipher": "Open Ciphertext",
+        "save_plain": "Save Plaintext",
+        "save_cipher": "Save Ciphertext",
+        "copy_plain": "Copy Plaintext",
+        "copy_cipher": "Copy Ciphertext",
+        "clear": "Clear",
+        "ready": "Ready",
+        "plain_empty": "Plaintext is empty.",
+        "password_empty": "Password is empty.",
+        "password_mismatch": "Password confirmation does not match.",
+        "encrypt_ok": "Encryption completed successfully",
+        "encrypt_failed": "Encryption failed",
+        "cipher_empty": "Ciphertext is empty.",
+        "recover_ok": "Recovery completed successfully",
+        "recover_failed": "Recovery failed",
+        "open_plain_title": "Open plaintext UTF-8 file",
+        "open_cipher_title": "Open STX1 ciphertext file",
+        "save_plain_title": "Save plaintext",
+        "save_cipher_title": "Save STX1 ciphertext",
+        "text_files": "Text files",
+        "all_files": "All files",
+        "loaded_plain": "Loaded plaintext: {name}",
+        "loaded_cipher": "Loaded ciphertext: {name}",
+        "saved_plain": "Saved plaintext: {name}",
+        "saved_cipher": "Saved ciphertext: {name}",
+        "open_failed": "Open failed",
+        "save_failed": "Save failed",
+        "plain_copied": "Plaintext copied",
+        "cipher_copied": "Ciphertext copied",
+    },
+    "zh": {
+        "window_title": "VeilText STX1 工具",
+        "title": "VeilText STX1 加密与恢复工具",
+        "language": "语言：",
+        "password_frame": "密码",
+        "password": "密码：",
+        "confirm": "确认密码：",
+        "show_password": "显示密码",
+        "plaintext": "明文",
+        "ciphertext": "STX1 密文",
+        "encrypt": "加密  →",
+        "decrypt": "←  解密 / 恢复",
+        "open_plain": "打开明文",
+        "open_cipher": "打开密文",
+        "save_plain": "保存明文",
+        "save_cipher": "保存密文",
+        "copy_plain": "复制明文",
+        "copy_cipher": "复制密文",
+        "clear": "清空",
+        "ready": "就绪",
+        "plain_empty": "明文为空。",
+        "password_empty": "密码为空。",
+        "password_mismatch": "两次输入的密码不一致。",
+        "encrypt_ok": "加密成功",
+        "encrypt_failed": "加密失败",
+        "cipher_empty": "密文为空。",
+        "recover_ok": "解密 / 恢复成功",
+        "recover_failed": "解密 / 恢复失败",
+        "open_plain_title": "打开 UTF-8 明文文件",
+        "open_cipher_title": "打开 STX1 密文文件",
+        "save_plain_title": "保存明文",
+        "save_cipher_title": "保存 STX1 密文",
+        "text_files": "文本文件",
+        "all_files": "所有文件",
+        "loaded_plain": "已加载明文：{name}",
+        "loaded_cipher": "已加载密文：{name}",
+        "saved_plain": "已保存明文：{name}",
+        "saved_cipher": "已保存密文：{name}",
+        "open_failed": "打开失败",
+        "save_failed": "保存失败",
+        "plain_copied": "明文已复制",
+        "cipher_copied": "密文已复制",
+    },
+}
+
+
 class VeilTextApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("VeilText STX1 Tool")
         self.geometry("1080x720")
         self.minsize(860, 600)
 
+        self.language_var = tk.StringVar(value="简体中文")
         self.password_var = tk.StringVar()
         self.confirm_var = tk.StringVar()
         self.show_password_var = tk.BooleanVar(value=False)
-        self.status_var = tk.StringVar(value="Ready")
+        self.status_var = tk.StringVar()
 
         self._build_ui()
+        self._update_ui_text()
+
+    def _lang(self) -> str:
+        return "zh" if self.language_var.get() == "简体中文" else "en"
+
+    def _t(self, key: str) -> str:
+        return TEXTS[self._lang()][key]
 
     def _build_ui(self) -> None:
         main = ttk.Frame(self, padding=12)
         main.pack(fill=tk.BOTH, expand=True)
 
-        title = ttk.Label(
-            main,
-            text="VeilText STX1 Encryption + Recovery",
+        header = ttk.Frame(main)
+        header.pack(fill=tk.X, pady=(0, 10))
+
+        self.title_label = ttk.Label(
+            header,
             font=("Segoe UI", 16, "bold"),
         )
-        title.pack(anchor=tk.W, pady=(0, 10))
+        self.title_label.pack(side=tk.LEFT, anchor=tk.W)
 
-        password_frame = ttk.LabelFrame(main, text="Password", padding=10)
-        password_frame.pack(fill=tk.X, pady=(0, 10))
+        language_box = ttk.Frame(header)
+        language_box.pack(side=tk.RIGHT)
 
-        password_frame.columnconfigure(1, weight=1)
-        password_frame.columnconfigure(3, weight=1)
+        self.language_label = ttk.Label(language_box)
+        self.language_label.pack(side=tk.LEFT, padx=(0, 6))
 
-        ttk.Label(password_frame, text="Password:").grid(
-            row=0, column=0, sticky=tk.W, padx=(0, 8)
+        self.language_combo = ttk.Combobox(
+            language_box,
+            textvariable=self.language_var,
+            values=("简体中文", "English"),
+            state="readonly",
+            width=12,
         )
+        self.language_combo.pack(side=tk.LEFT)
+        self.language_combo.bind("<<ComboboxSelected>>", self._on_language_change)
+
+        self.password_frame = ttk.LabelFrame(main, padding=10)
+        self.password_frame.pack(fill=tk.X, pady=(0, 10))
+        self.password_frame.columnconfigure(1, weight=1)
+        self.password_frame.columnconfigure(3, weight=1)
+
+        self.password_label = ttk.Label(self.password_frame)
+        self.password_label.grid(row=0, column=0, sticky=tk.W, padx=(0, 8))
+
         self.password_entry = ttk.Entry(
-            password_frame,
+            self.password_frame,
             textvariable=self.password_var,
             show="*",
         )
         self.password_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, 16))
 
-        ttk.Label(password_frame, text="Confirm:").grid(
-            row=0, column=2, sticky=tk.W, padx=(0, 8)
-        )
+        self.confirm_label = ttk.Label(self.password_frame)
+        self.confirm_label.grid(row=0, column=2, sticky=tk.W, padx=(0, 8))
+
         self.confirm_entry = ttk.Entry(
-            password_frame,
+            self.password_frame,
             textvariable=self.confirm_var,
             show="*",
         )
         self.confirm_entry.grid(row=0, column=3, sticky=tk.EW, padx=(0, 12))
 
-        ttk.Checkbutton(
-            password_frame,
-            text="Show password",
+        self.show_password_check = ttk.Checkbutton(
+            self.password_frame,
             variable=self.show_password_var,
             command=self._toggle_password_visibility,
-        ).grid(row=0, column=4, sticky=tk.W)
+        )
+        self.show_password_check.grid(row=0, column=4, sticky=tk.W)
 
         body = ttk.Panedwindow(main, orient=tk.HORIZONTAL)
         body.pack(fill=tk.BOTH, expand=True)
 
-        plain_frame = ttk.LabelFrame(body, text="Plaintext", padding=8)
-        cipher_frame = ttk.LabelFrame(body, text="STX1 Ciphertext", padding=8)
-        body.add(plain_frame, weight=1)
-        body.add(cipher_frame, weight=1)
+        self.plain_frame = ttk.LabelFrame(body, padding=8)
+        self.cipher_frame = ttk.LabelFrame(body, padding=8)
+        body.add(self.plain_frame, weight=1)
+        body.add(self.cipher_frame, weight=1)
 
         self.plain_text = tk.Text(
-            plain_frame,
+            self.plain_frame,
             wrap=tk.WORD,
             undo=True,
             font=("Consolas", 10),
         )
         plain_scroll = ttk.Scrollbar(
-            plain_frame, orient=tk.VERTICAL, command=self.plain_text.yview
+            self.plain_frame, orient=tk.VERTICAL, command=self.plain_text.yview
         )
         self.plain_text.configure(yscrollcommand=plain_scroll.set)
         self.plain_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         plain_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.cipher_text = tk.Text(
-            cipher_frame,
+            self.cipher_frame,
             wrap=tk.WORD,
             undo=True,
             font=("Consolas", 10),
         )
         cipher_scroll = ttk.Scrollbar(
-            cipher_frame, orient=tk.VERTICAL, command=self.cipher_text.yview
+            self.cipher_frame, orient=tk.VERTICAL, command=self.cipher_text.yview
         )
         self.cipher_text.configure(yscrollcommand=cipher_scroll.set)
         self.cipher_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -100,62 +214,41 @@ class VeilTextApp(tk.Tk):
         action_frame = ttk.Frame(main)
         action_frame.pack(fill=tk.X, pady=(10, 6))
 
-        ttk.Button(
-            action_frame,
-            text="Encrypt  →",
-            command=self.encrypt_text,
-        ).pack(side=tk.LEFT, padx=(0, 8))
+        self.encrypt_button = ttk.Button(action_frame, command=self.encrypt_text)
+        self.encrypt_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        ttk.Button(
-            action_frame,
-            text="←  Decrypt / Recover",
-            command=self.decrypt_text,
-        ).pack(side=tk.LEFT, padx=(0, 18))
+        self.decrypt_button = ttk.Button(action_frame, command=self.decrypt_text)
+        self.decrypt_button.pack(side=tk.LEFT, padx=(0, 18))
 
-        ttk.Button(
-            action_frame,
-            text="Open Plaintext",
-            command=self.open_plaintext,
-        ).pack(side=tk.LEFT, padx=(0, 8))
+        self.open_plain_button = ttk.Button(action_frame, command=self.open_plaintext)
+        self.open_plain_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        ttk.Button(
-            action_frame,
-            text="Open Ciphertext",
-            command=self.open_ciphertext,
-        ).pack(side=tk.LEFT, padx=(0, 8))
+        self.open_cipher_button = ttk.Button(action_frame, command=self.open_ciphertext)
+        self.open_cipher_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        ttk.Button(
-            action_frame,
-            text="Save Plaintext",
-            command=self.save_plaintext,
-        ).pack(side=tk.LEFT, padx=(0, 8))
+        self.save_plain_button = ttk.Button(action_frame, command=self.save_plaintext)
+        self.save_plain_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        ttk.Button(
-            action_frame,
-            text="Save Ciphertext",
-            command=self.save_ciphertext,
-        ).pack(side=tk.LEFT, padx=(0, 8))
+        self.save_cipher_button = ttk.Button(action_frame, command=self.save_ciphertext)
+        self.save_cipher_button.pack(side=tk.LEFT, padx=(0, 8))
 
         second_actions = ttk.Frame(main)
         second_actions.pack(fill=tk.X, pady=(0, 6))
 
-        ttk.Button(
+        self.copy_plain_button = ttk.Button(
             second_actions,
-            text="Copy Plaintext",
-            command=lambda: self.copy_text(self.plain_text, "Plaintext copied"),
-        ).pack(side=tk.LEFT, padx=(0, 8))
+            command=lambda: self.copy_text(self.plain_text, "plain_copied"),
+        )
+        self.copy_plain_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        ttk.Button(
+        self.copy_cipher_button = ttk.Button(
             second_actions,
-            text="Copy Ciphertext",
-            command=lambda: self.copy_text(self.cipher_text, "Ciphertext copied"),
-        ).pack(side=tk.LEFT, padx=(0, 8))
+            command=lambda: self.copy_text(self.cipher_text, "cipher_copied"),
+        )
+        self.copy_cipher_button.pack(side=tk.LEFT, padx=(0, 8))
 
-        ttk.Button(
-            second_actions,
-            text="Clear",
-            command=self.clear_all,
-        ).pack(side=tk.LEFT)
+        self.clear_button = ttk.Button(second_actions, command=self.clear_all)
+        self.clear_button.pack(side=tk.LEFT)
 
         ttk.Label(
             main,
@@ -164,6 +257,30 @@ class VeilTextApp(tk.Tk):
             anchor=tk.W,
             padding=(6, 3),
         ).pack(fill=tk.X, pady=(4, 0))
+
+    def _on_language_change(self, _event=None) -> None:
+        self._update_ui_text()
+
+    def _update_ui_text(self) -> None:
+        self.title(self._t("window_title"))
+        self.title_label.configure(text=self._t("title"))
+        self.language_label.configure(text=self._t("language"))
+        self.password_frame.configure(text=self._t("password_frame"))
+        self.password_label.configure(text=self._t("password"))
+        self.confirm_label.configure(text=self._t("confirm"))
+        self.show_password_check.configure(text=self._t("show_password"))
+        self.plain_frame.configure(text=self._t("plaintext"))
+        self.cipher_frame.configure(text=self._t("ciphertext"))
+        self.encrypt_button.configure(text=self._t("encrypt"))
+        self.decrypt_button.configure(text=self._t("decrypt"))
+        self.open_plain_button.configure(text=self._t("open_plain"))
+        self.open_cipher_button.configure(text=self._t("open_cipher"))
+        self.save_plain_button.configure(text=self._t("save_plain"))
+        self.save_cipher_button.configure(text=self._t("save_cipher"))
+        self.copy_plain_button.configure(text=self._t("copy_plain"))
+        self.copy_cipher_button.configure(text=self._t("copy_cipher"))
+        self.clear_button.configure(text=self._t("clear"))
+        self.status_var.set(self._t("ready"))
 
     def _toggle_password_visibility(self) -> None:
         show = "" if self.show_password_var.get() else "*"
@@ -176,51 +293,54 @@ class VeilTextApp(tk.Tk):
         confirmation = self.confirm_var.get()
 
         if not plaintext:
-            messagebox.showwarning("VeilText", "Plaintext is empty.")
+            messagebox.showwarning("VeilText", self._t("plain_empty"))
             return
         if not password:
-            messagebox.showwarning("VeilText", "Password is empty.")
+            messagebox.showwarning("VeilText", self._t("password_empty"))
             return
         if password != confirmation:
-            messagebox.showerror("VeilText", "Password confirmation does not match.")
+            messagebox.showerror("VeilText", self._t("password_mismatch"))
             return
 
         try:
             ciphertext = encrypt_veiltext(plaintext, password)
             self.cipher_text.delete("1.0", tk.END)
             self.cipher_text.insert("1.0", ciphertext)
-            self.status_var.set("Encryption completed successfully")
+            self.status_var.set(self._t("encrypt_ok"))
         except Exception as exc:
-            messagebox.showerror("Encryption failed", str(exc))
-            self.status_var.set("Encryption failed")
+            messagebox.showerror(self._t("encrypt_failed"), str(exc))
+            self.status_var.set(self._t("encrypt_failed"))
 
     def decrypt_text(self) -> None:
         ciphertext = self.cipher_text.get("1.0", "end-1c").strip()
         password = self.password_var.get()
 
         if not ciphertext:
-            messagebox.showwarning("VeilText", "Ciphertext is empty.")
+            messagebox.showwarning("VeilText", self._t("cipher_empty"))
             return
         if not password:
-            messagebox.showwarning("VeilText", "Password is empty.")
+            messagebox.showwarning("VeilText", self._t("password_empty"))
             return
 
         try:
             plaintext = decrypt_veiltext(ciphertext, password)
             self.plain_text.delete("1.0", tk.END)
             self.plain_text.insert("1.0", plaintext)
-            self.status_var.set("Recovery completed successfully")
+            self.status_var.set(self._t("recover_ok"))
         except Exception as exc:
-            messagebox.showerror("Recovery failed", str(exc))
-            self.status_var.set("Recovery failed")
+            messagebox.showerror(self._t("recover_failed"), str(exc))
+            self.status_var.set(self._t("recover_failed"))
+
+    def _filetypes(self):
+        return [
+            (self._t("text_files"), "*.txt"),
+            (self._t("all_files"), "*.*"),
+        ]
 
     def open_plaintext(self) -> None:
         path = filedialog.askopenfilename(
-            title="Open plaintext UTF-8 file",
-            filetypes=[
-                ("Text files", "*.txt"),
-                ("All files", "*.*"),
-            ],
+            title=self._t("open_plain_title"),
+            filetypes=self._filetypes(),
         )
         if not path:
             return
@@ -229,17 +349,14 @@ class VeilTextApp(tk.Tk):
             content = Path(path).read_text(encoding="utf-8")
             self.plain_text.delete("1.0", tk.END)
             self.plain_text.insert("1.0", content)
-            self.status_var.set(f"Loaded plaintext: {Path(path).name}")
+            self.status_var.set(self._t("loaded_plain").format(name=Path(path).name))
         except Exception as exc:
-            messagebox.showerror("Open failed", str(exc))
+            messagebox.showerror(self._t("open_failed"), str(exc))
 
     def open_ciphertext(self) -> None:
         path = filedialog.askopenfilename(
-            title="Open STX1 ciphertext file",
-            filetypes=[
-                ("Text files", "*.txt"),
-                ("All files", "*.*"),
-            ],
+            title=self._t("open_cipher_title"),
+            filetypes=self._filetypes(),
         )
         if not path:
             return
@@ -248,59 +365,53 @@ class VeilTextApp(tk.Tk):
             content = Path(path).read_text(encoding="utf-8")
             self.cipher_text.delete("1.0", tk.END)
             self.cipher_text.insert("1.0", content.strip())
-            self.status_var.set(f"Loaded ciphertext: {Path(path).name}")
+            self.status_var.set(self._t("loaded_cipher").format(name=Path(path).name))
         except Exception as exc:
-            messagebox.showerror("Open failed", str(exc))
+            messagebox.showerror(self._t("open_failed"), str(exc))
 
     def save_plaintext(self) -> None:
         content = self.plain_text.get("1.0", "end-1c")
         if not content:
-            messagebox.showwarning("VeilText", "Plaintext is empty.")
+            messagebox.showwarning("VeilText", self._t("plain_empty"))
             return
 
         path = filedialog.asksaveasfilename(
-            title="Save plaintext",
+            title=self._t("save_plain_title"),
             defaultextension=".txt",
             initialfile="recovered.txt",
-            filetypes=[
-                ("Text files", "*.txt"),
-                ("All files", "*.*"),
-            ],
+            filetypes=self._filetypes(),
         )
         if not path:
             return
 
         try:
             Path(path).write_text(content, encoding="utf-8")
-            self.status_var.set(f"Saved plaintext: {Path(path).name}")
+            self.status_var.set(self._t("saved_plain").format(name=Path(path).name))
         except Exception as exc:
-            messagebox.showerror("Save failed", str(exc))
+            messagebox.showerror(self._t("save_failed"), str(exc))
 
     def save_ciphertext(self) -> None:
         content = self.cipher_text.get("1.0", "end-1c").strip()
         if not content:
-            messagebox.showwarning("VeilText", "Ciphertext is empty.")
+            messagebox.showwarning("VeilText", self._t("cipher_empty"))
             return
 
         path = filedialog.asksaveasfilename(
-            title="Save STX1 ciphertext",
+            title=self._t("save_cipher_title"),
             defaultextension=".txt",
             initialfile="encrypted_stx1.txt",
-            filetypes=[
-                ("Text files", "*.txt"),
-                ("All files", "*.*"),
-            ],
+            filetypes=self._filetypes(),
         )
         if not path:
             return
 
         try:
             Path(path).write_text(content, encoding="utf-8")
-            self.status_var.set(f"Saved ciphertext: {Path(path).name}")
+            self.status_var.set(self._t("saved_cipher").format(name=Path(path).name))
         except Exception as exc:
-            messagebox.showerror("Save failed", str(exc))
+            messagebox.showerror(self._t("save_failed"), str(exc))
 
-    def copy_text(self, widget: tk.Text, status: str) -> None:
+    def copy_text(self, widget: tk.Text, status_key: str) -> None:
         content = widget.get("1.0", "end-1c")
         if not content:
             return
@@ -308,14 +419,14 @@ class VeilTextApp(tk.Tk):
         self.clipboard_clear()
         self.clipboard_append(content)
         self.update()
-        self.status_var.set(status)
+        self.status_var.set(self._t(status_key))
 
     def clear_all(self) -> None:
         self.plain_text.delete("1.0", tk.END)
         self.cipher_text.delete("1.0", tk.END)
         self.password_var.set("")
         self.confirm_var.set("")
-        self.status_var.set("Ready")
+        self.status_var.set(self._t("ready"))
         self.password_entry.focus_set()
 
 
