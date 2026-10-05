@@ -1,16 +1,20 @@
 import base64
-import json
-import sys
 import getpass
+import json
+import os
+import sys
 from pathlib import Path
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
 
 
 ITERATIONS = 600_000
 AAD = b"STX1|AES-256-GCM|PBKDF2-SHA256|600000"
+SALT_LENGTH = 16
+NONCE_LENGTH = 12
+TAG_LENGTH = 16
 
 
 def derive_key(password: str, salt: bytes) -> bytes:
@@ -22,6 +26,40 @@ def derive_key(password: str, salt: bytes) -> bytes:
         iterations=ITERATIONS,
     )
     return kdf.derive(password.encode("utf-8"))
+
+
+def encrypt_veiltext(plaintext: str, password: str) -> str:
+    """Encrypt UTF-8 text into a VeilText STX1 ciphertext."""
+    salt = os.urandom(SALT_LENGTH)
+    nonce = os.urandom(NONCE_LENGTH)
+    key = derive_key(password, salt)
+
+    encrypted = AESGCM(key).encrypt(
+        nonce,
+        plaintext.encode("utf-8"),
+        AAD,
+    )
+    ciphertext = encrypted[:-TAG_LENGTH]
+    tag = encrypted[-TAG_LENGTH:]
+
+    payload = {
+        "Version": 1,
+        "Algorithm": "AES-256-GCM",
+        "Kdf": "PBKDF2-SHA256",
+        "Iterations": ITERATIONS,
+        "Salt": base64.b64encode(salt).decode("ascii"),
+        "Nonce": base64.b64encode(nonce).decode("ascii"),
+        "Ciphertext": base64.b64encode(ciphertext).decode("ascii"),
+        "Tag": base64.b64encode(tag).decode("ascii"),
+    }
+
+    json_bytes = json.dumps(
+        payload,
+        ensure_ascii=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+    return "STX1:" + base64.b64encode(json_bytes).decode("ascii")
 
 
 def decrypt_veiltext(encrypted_text: str, password: str) -> str:
@@ -48,11 +86,11 @@ def decrypt_veiltext(encrypted_text: str, password: str) -> str:
     ciphertext = base64.b64decode(payload["Ciphertext"], validate=True)
     tag = base64.b64decode(payload["Tag"], validate=True)
 
-    if len(salt) != 16:
+    if len(salt) != SALT_LENGTH:
         raise ValueError("Invalid salt length.")
-    if len(nonce) != 12:
+    if len(nonce) != NONCE_LENGTH:
         raise ValueError("Invalid nonce length.")
-    if len(tag) != 16:
+    if len(tag) != TAG_LENGTH:
         raise ValueError("Invalid authentication tag length.")
     if len(ciphertext) == 0:
         raise ValueError("Invalid ciphertext length.")
@@ -64,7 +102,7 @@ def decrypt_veiltext(encrypted_text: str, password: str) -> str:
         plaintext_bytes = aesgcm.decrypt(
             nonce,
             ciphertext + tag,
-            AAD
+            AAD,
         )
     except Exception as exc:
         raise ValueError(
@@ -75,48 +113,139 @@ def decrypt_veiltext(encrypted_text: str, password: str) -> str:
     return plaintext_bytes.decode("utf-8")
 
 
+def encrypt_file(input_path: str, output_path: str, password: str) -> None:
+    plaintext = Path(input_path).read_text(encoding="utf-8")
+    encrypted_text = encrypt_veiltext(plaintext, password)
+    Path(output_path).write_text(encrypted_text, encoding="utf-8")
+
+
 def decrypt_file(input_path: str, output_path: str, password: str) -> None:
     encrypted_text = Path(input_path).read_text(encoding="utf-8")
     plaintext = decrypt_veiltext(encrypted_text, password)
     Path(output_path).write_text(plaintext, encoding="utf-8")
 
 
-def interactive_mode() -> None:
-    print("VeilText STX1 Recovery Tool")
-    print("---------------------------")
-    print("1. Paste ciphertext")
-    print("2. Read ciphertext from file")
+def prompt_new_password() -> str:
+    password = getpass.getpass("Password: ")
+    confirmation = getpass.getpass("Confirm password: ")
+
+    if password != confirmation:
+        raise ValueError("Passwords do not match.")
+    if password == "":
+        raise ValueError("Password must not be empty.")
+
+    return password
+
+
+def read_multiline_plaintext() -> str:
+    print()
+    print("Paste plaintext below.")
+    print("Enter a line containing only ::END:: when finished:")
+    lines = []
+
+    while True:
+        line = input()
+        if line == "::END::":
+            break
+        lines.append(line)
+
+    return "\n".join(lines)
+
+
+def encrypt_text_interactive() -> None:
+    plaintext = read_multiline_plaintext()
+    password = prompt_new_password()
+    encrypted_text = encrypt_veiltext(plaintext, password)
+
+    print()
+    print("===== STX1 ciphertext =====")
+    print(encrypted_text)
+    print("===========================")
     print()
 
-    choice = input("Choose 1 or 2 [1]: ").strip() or "1"
+    save = input("Save ciphertext to a UTF-8 text file? [y/N]: ").strip().lower()
+    if save == "y":
+        output_path = (
+            input("Output file path [encrypted_stx1.txt]: ").strip().strip('"')
+            or "encrypted_stx1.txt"
+        )
+        Path(output_path).write_text(encrypted_text, encoding="utf-8")
+        print(f"Saved to: {output_path}")
+
+
+def decrypt_text_interactive() -> None:
+    print()
+    print("Paste the complete STX1 ciphertext, then press Enter:")
+    encrypted_text = input().strip()
     password = getpass.getpass("Password: ")
+    plaintext = decrypt_veiltext(encrypted_text, password)
+
+    print()
+    print("===== Decrypted text =====")
+    print(plaintext)
+    print("==========================")
+    print()
+
+    save = input("Save plaintext to a UTF-8 text file? [y/N]: ").strip().lower()
+    if save == "y":
+        output_path = (
+            input("Output file path [recovered.txt]: ").strip().strip('"')
+            or "recovered.txt"
+        )
+        Path(output_path).write_text(plaintext, encoding="utf-8")
+        print(f"Saved to: {output_path}")
+
+
+def encrypt_file_interactive() -> None:
+    input_path = input("Plaintext UTF-8 file path: ").strip().strip('"')
+    output_path = (
+        input("Output file path [encrypted_stx1.txt]: ").strip().strip('"')
+        or "encrypted_stx1.txt"
+    )
+    password = prompt_new_password()
+    encrypt_file(input_path, output_path, password)
+    print(f"Encrypted file saved to: {output_path}")
+
+
+def decrypt_file_interactive() -> None:
+    input_path = input("Encrypted STX1 text file path: ").strip().strip('"')
+    output_path = (
+        input("Output file path [recovered.txt]: ").strip().strip('"')
+        or "recovered.txt"
+    )
+    password = getpass.getpass("Password: ")
+    decrypt_file(input_path, output_path, password)
+    print(f"Recovered plaintext saved to: {output_path}")
+
+
+def interactive_mode() -> None:
+    print("VeilText STX1 Encryption + Recovery Tool")
+    print("----------------------------------------")
+    print("1. Encrypt pasted text")
+    print("2. Decrypt / recover pasted STX1 ciphertext")
+    print("3. Encrypt UTF-8 text file")
+    print("4. Decrypt / recover STX1 text file")
+    print("5. Exit")
+    print()
+
+    choice = input("Choose 1-5 [2]: ").strip() or "2"
 
     try:
-        if choice == "2":
-            input_path = input("Encrypted text file path: ").strip().strip('"')
-            encrypted_text = Path(input_path).read_text(encoding="utf-8")
+        if choice == "1":
+            encrypt_text_interactive()
+        elif choice == "2":
+            decrypt_text_interactive()
+        elif choice == "3":
+            encrypt_file_interactive()
+        elif choice == "4":
+            decrypt_file_interactive()
+        elif choice == "5":
+            return
         else:
-            print()
-            print("Paste the complete STX1 ciphertext, then press Enter:")
-            encrypted_text = input().strip()
-
-        plaintext = decrypt_veiltext(encrypted_text, password)
-
+            raise ValueError("Invalid choice. Please select 1, 2, 3, 4, or 5.")
+    except Exception as exc:
         print()
-        print("===== Decrypted text =====")
-        print(plaintext)
-        print("==========================")
-        print()
-
-        save = input("Save plaintext to a UTF-8 text file? [y/N]: ").strip().lower()
-        if save == "y":
-            output_path = input("Output file path [recovered.txt]: ").strip().strip('"') or "recovered.txt"
-            Path(output_path).write_text(plaintext, encoding="utf-8")
-            print(f"Saved to: {output_path}")
-
-    except Exception as e:
-        print()
-        print("ERROR:", e)
+        print("ERROR:", exc)
         sys.exit(1)
 
 
