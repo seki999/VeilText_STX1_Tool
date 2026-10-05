@@ -1,6 +1,6 @@
-VeilText STX1 Recovery Test Notes
+VeilText STX1 Encryption + Recovery Test Notes
 
-建议你自己用当前 VeilText 创建一份永久测试数据。
+建议你自己建立一份永久兼容性测试数据。
 
 例如原文：
 
@@ -11,18 +11,46 @@ Emoji: 🔐
 
 使用一个“仅供测试”的密码进行加密。
 
-然后把得到的完整 STX1:... 密文保存为：
+测试 1：Python 加密 -> Python 解密
 
-test_ciphertext.txt
+1. 运行：
+   python veiltext_stx1_recovery.py
+2. 选择 1 或 3 加密上述测试文本。
+3. 保存完整 STX1:... 密文为：
+   test_ciphertext_python.txt
+4. 再选择 2 或 4 解密。
+5. 确认恢复结果与原文逐字一致。
 
-同时把上面的已知原文保存为：
+测试 2：原 VeilText -> Python 解密
+
+如果仍然可以运行原 VeilText：
+
+1. 使用原 VeilText 加密同一测试文本。
+2. 保存密文为：
+   test_ciphertext_veiltext.txt
+3. 使用本 Python 工具解密。
+4. 确认结果与原文完全一致。
+
+测试 3：Python -> VeilText
+
+如果原 VeilText 支持导入 / 粘贴 STX1 密文：
+
+1. 使用本 Python 工具生成 STX1 密文。
+2. 在 VeilText 中使用同一密码解密。
+3. 确认结果与原文完全一致。
+
+同时把已知原文保存为：
 
 test_plaintext.txt
 
-以后换电脑、升级 Windows、重装 Python 或多年后重新恢复时，
-先运行本 Python 工具解密 test_ciphertext.txt。
+以后换电脑、升级 Windows、重装 Python 或多年后重新验证时，
+优先运行这些兼容性测试。
 
-如果结果与 test_plaintext.txt 完全一致，
-就说明恢复工具和当前环境工作正常。
+如果 Python <-> VeilText 双向测试均通过，
+就说明两个实现遵守同一个 STX1 v1 格式。
 
-注意：测试密码不要使用你的真实私人数据密码。
+注意：
+
+- 测试密码不要使用你的真实私人数据密码。
+- 每次加密产生不同 STX1 密文是正常现象，因为 Salt 和 Nonce 都是随机生成的。
+- 测试重点是“解密后的明文完全一致”，不是密文字符串一致。
