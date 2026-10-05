@@ -106,7 +106,25 @@ SHA256.txt
 
 ## 本地构建 EXE（仅开发者需要 Python）
 
-如果需要自己重新制作 EXE，在 Windows PowerShell 中执行：
+推荐使用 Python 虚拟环境进行构建，这样可以避免污染系统 Python，也能让不同项目之间的依赖保持隔离。
+
+推荐方式：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-build.txt
+.\build_exe.ps1
+```
+
+其中：
+
+- `.venv` 仅用于开发和重新构建 EXE
+- 最终生成的 `VeilText_STX1_Tool.exe` 不依赖这个虚拟环境
+- 普通用户运行 EXE 时不需要安装 Python
+
+如果已经有合适的 Python 环境，也可以直接执行：
 
 ```powershell
 .\build_exe.ps1
