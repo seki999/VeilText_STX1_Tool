@@ -127,6 +127,22 @@ encrypted_stx1.txt
 recovered.txt
 ```
 
+## 自动兼容性测试
+
+项目包含 `test_stx1.py`，可直接运行：
+
+```powershell
+python -m unittest -v
+```
+
+测试覆盖：
+
+- 中文 / 日文 / 英文 / Emoji 往返加密解密
+- STX1 v1 JSON 字段和参数检查
+- 随机 Salt / Nonce 导致相同明文每次产生不同密文
+- 错误密码必须解密失败
+- 空明文和空密码的新加密请求会被拒绝
+
 ## Python API
 
 也可以直接导入使用：
