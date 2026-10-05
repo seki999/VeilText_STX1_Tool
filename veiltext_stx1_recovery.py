@@ -30,6 +30,11 @@ def derive_key(password: str, salt: bytes) -> bytes:
 
 def encrypt_veiltext(plaintext: str, password: str) -> str:
     """Encrypt UTF-8 text into a VeilText STX1 ciphertext."""
+    if plaintext == "":
+        raise ValueError("Plaintext must not be empty.")
+    if password == "":
+        raise ValueError("Password must not be empty.")
+
     salt = os.urandom(SALT_LENGTH)
     nonce = os.urandom(NONCE_LENGTH)
     key = derive_key(password, salt)
