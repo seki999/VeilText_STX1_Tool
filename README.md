@@ -1,6 +1,6 @@
 # VeilText STX1 Encryption + Recovery
 
-这是 VeilText 的独立 Python 加密 / 恢复工具。
+这是 VeilText 的独立 STX1 加密 / 恢复工具。普通 Windows 用户可以直接使用单文件 `VeilText_STX1_Tool.exe`，无需安装 Python；同时完整保留 Python 源码和 STX1 规范，作为长期恢复保险。
 
 它既可以生成与 VeilText STX1 规范兼容的密文，也可以在原始 VeilText.exe、WPF 程序或原电脑已经丢失的情况下独立恢复原文。
 
@@ -8,9 +8,10 @@
 
 - 完整的 `STX1:...` 密文
 - 正确密码
-- Python 环境
 
-就可以恢复原文。
+就可以通过 Windows 单文件 EXE 恢复原文。
+
+即使未来 EXE 因 Windows 兼容性变化而无法运行，只要 Python 生态仍可用，也可以依据本仓库保留的 Python 源码和 `STX1-SPEC.md` 独立恢复。
 
 ## 功能
 
@@ -57,7 +58,93 @@ JSON 字段：
 - 原 VeilText 生成的 STX1 密文可以继续由本工具恢复。
 - 本工具生成的 STX1 密文遵守同一格式，可供任何正确实现 STX1 规范的程序解密。
 
-## 安装
+## Windows 单文件 EXE（普通用户推荐）
+
+发布版目标文件：
+
+```text
+VeilText_STX1_Tool.exe
+```
+
+这是 **Portable 单文件程序**：
+
+- 不需要预先安装 Python
+- 不需要运行 `pip install`
+- 不需要虚拟环境
+- 不需要安装器
+- 双击即可打开图形界面
+- EXE 内包含 Python 运行时及所需的 `cryptography` 依赖
+- 加密格式仍然严格保持 STX1 v1，不因打包方式发生变化
+
+### 从 GitHub Actions 下载 EXE
+
+仓库已包含：
+
+```text
+.github/workflows/build-windows-exe.yml
+```
+
+每次相关源码推送到 `main` 后，GitHub 会在 Windows Runner 上：
+
+1. 安装构建用 Python
+2. 安装运行依赖和 PyInstaller
+3. 运行 STX1 自动兼容性测试
+4. 构建单文件 GUI EXE
+5. 计算 SHA-256
+6. 上传构建产物 `VeilText_STX1_Tool-Windows-x64`
+
+构建产物包含：
+
+```text
+VeilText_STX1_Tool.exe
+SHA256.txt
+```
+
+进入仓库的 **Actions → Build Windows EXE → 最新成功运行 → Artifacts** 即可下载。
+
+> GitHub Actions 的 Artifact 有保留期限。因此，重要版本建议下载后自行备份，或后续再发布到 GitHub Releases。
+
+## 本地构建 EXE（仅开发者需要 Python）
+
+如果需要自己重新制作 EXE，在 Windows PowerShell 中执行：
+
+```powershell
+.\build_exe.ps1
+```
+
+脚本会自动：
+
+- 安装 `requirements.txt`
+- 安装 `requirements-build.txt` 中的 PyInstaller
+- 执行全部单元测试
+- 构建 `--onefile --windowed` GUI 程序
+- 输出 SHA-256
+
+生成文件：
+
+```text
+dist\VeilText_STX1_Tool.exe
+```
+
+这里的 Python **只用于开发/重新打包**。最终生成的 EXE 在目标 Windows 电脑上运行时不需要 Python。
+
+## Python 源码恢复模式（长期保险）
+
+本仓库继续保留完整 Python 实现，不依赖 EXE：
+
+- `veiltext_stx1_recovery.py`：核心加密 / 解密逻辑
+- `veiltext_stx1_gui.py`：Tkinter GUI
+- `requirements.txt`：运行依赖
+- `STX1-SPEC.md`：独立格式规范
+- `test_stx1.py`：兼容性测试
+
+建议 Python 3.10 或更高版本。
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+## Python 源码版安装
 
 建议 Python 3.10 或更高版本。
 
@@ -67,7 +154,7 @@ python -m pip install -r requirements.txt
 
 ## 图形界面（推荐）
 
-Windows 上可以直接运行：
+使用 Python 源码模式时，Windows 上可以运行：
 
 ```powershell
 python veiltext_stx1_gui.py
@@ -210,7 +297,7 @@ decrypt_file("encrypted.txt", "recovered.txt", "my-password")
 
 ## 长期保存建议
 
-建议把整个项目 ZIP 与重要密文分开备份到多个位置，例如：
+建议同时保存 **EXE + Python 源码 + STX1 规范**，并与重要密文分开备份到多个位置，例如：
 
 - 本地电脑
 - 外置硬盘 / U 盘
@@ -220,9 +307,13 @@ decrypt_file("encrypted.txt", "recovered.txt", "my-password")
 
 请长期保留：
 
-- `veiltext_stx1_recovery.py`
+- `VeilText_STX1_Tool.exe`（方便直接使用）
+- `veiltext_stx1_recovery.py`（最重要的源码保险）
+- `veiltext_stx1_gui.py`
 - `requirements.txt`
+- `requirements-build.txt`
 - `STX1-SPEC.md`
+- `build_exe.ps1`
 - 本 README
 - 一份已知明文对应的测试密文
 
