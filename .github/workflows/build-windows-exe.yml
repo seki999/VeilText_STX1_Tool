@@ -1,0 +1,61 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.py"
+      - "requirements*.txt"
+      - "build_exe.ps1"
+      - ".github/workflows/build-windows-exe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-exe:
+    name: Build portable single-file EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install runtime and build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-build.txt
+
+      - name: Run STX1 compatibility tests
+        run: python -m unittest -v
+
+      - name: Build single-file Windows GUI
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name VeilText_STX1_Tool veiltext_stx1_gui.py
+
+      - name: Calculate SHA256
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 "dist\VeilText_STX1_Tool.exe").Hash
+          "VeilText_STX1_Tool.exe  $hash" | Out-File -Encoding ascii "dist\SHA256.txt"
+          Get-Content "dist\SHA256.txt"
+
+      - name: Upload portable EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: VeilText_STX1_Tool-Windows-x64
+          path: |
+            dist/VeilText_STX1_Tool.exe
+            dist/SHA256.txt
+          if-no-files-found: error
+          retention-days: 90
