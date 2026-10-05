@@ -24,6 +24,7 @@ TEXTS = {
         "save_cipher": "Save Ciphertext",
         "copy_plain": "Copy Plaintext",
         "copy_cipher": "Copy Ciphertext",
+        "paste_cipher": "Paste Ciphertext",
         "clear": "Clear",
         "ready": "Ready",
         "plain_empty": "Plaintext is empty.",
@@ -48,6 +49,7 @@ TEXTS = {
         "save_failed": "Save failed",
         "plain_copied": "Plaintext copied",
         "cipher_copied": "Ciphertext copied",
+        "cipher_pasted": "Ciphertext pasted",
     },
     "zh": {
         "window_title": "VeilText STX1 工具",
@@ -67,6 +69,7 @@ TEXTS = {
         "save_cipher": "保存密文",
         "copy_plain": "复制明文",
         "copy_cipher": "复制密文",
+        "paste_cipher": "粘贴密文",
         "clear": "清空",
         "ready": "就绪",
         "plain_empty": "明文为空。",
@@ -91,6 +94,7 @@ TEXTS = {
         "save_failed": "保存失败",
         "plain_copied": "明文已复制",
         "cipher_copied": "密文已复制",
+        "cipher_pasted": "密文已粘贴",
     },
 }
 
@@ -247,6 +251,12 @@ class VeilTextApp(tk.Tk):
         )
         self.copy_cipher_button.pack(side=tk.LEFT, padx=(0, 8))
 
+        self.paste_cipher_button = ttk.Button(
+            second_actions,
+            command=self.paste_ciphertext,
+        )
+        self.paste_cipher_button.pack(side=tk.LEFT, padx=(0, 8))
+
         self.clear_button = ttk.Button(second_actions, command=self.clear_all)
         self.clear_button.pack(side=tk.LEFT)
 
@@ -279,6 +289,7 @@ class VeilTextApp(tk.Tk):
         self.save_cipher_button.configure(text=self._t("save_cipher"))
         self.copy_plain_button.configure(text=self._t("copy_plain"))
         self.copy_cipher_button.configure(text=self._t("copy_cipher"))
+        self.paste_cipher_button.configure(text=self._t("paste_cipher"))
         self.clear_button.configure(text=self._t("clear"))
         self.status_var.set(self._t("ready"))
 
@@ -306,6 +317,10 @@ class VeilTextApp(tk.Tk):
             ciphertext = encrypt_veiltext(plaintext, password)
             self.cipher_text.delete("1.0", tk.END)
             self.cipher_text.insert("1.0", ciphertext)
+            self.cipher_text.tag_add(tk.SEL, "1.0", "end-1c")
+            self.cipher_text.mark_set(tk.INSERT, "1.0")
+            self.cipher_text.see("1.0")
+            self.cipher_text.focus_set()
             self.status_var.set(self._t("encrypt_ok"))
         except Exception as exc:
             messagebox.showerror(self._t("encrypt_failed"), str(exc))
@@ -420,6 +435,20 @@ class VeilTextApp(tk.Tk):
         self.clipboard_append(content)
         self.update()
         self.status_var.set(self._t(status_key))
+
+    def paste_ciphertext(self) -> None:
+        try:
+            content = self.clipboard_get().strip()
+        except tk.TclError:
+            content = ""
+
+        if not content:
+            return
+
+        self.cipher_text.delete("1.0", tk.END)
+        self.cipher_text.insert("1.0", content)
+        self.cipher_text.focus_set()
+        self.status_var.set(self._t("cipher_pasted"))
 
     def clear_all(self) -> None:
         self.plain_text.delete("1.0", tk.END)
