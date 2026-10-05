@@ -65,7 +65,38 @@ JSON 字段：
 python -m pip install -r requirements.txt
 ```
 
-## 使用
+## 图形界面（推荐）
+
+Windows 上可以直接运行：
+
+```powershell
+python veiltext_stx1_gui.py
+```
+
+或者双击：
+
+```text
+run_gui.bat
+```
+
+GUI 提供：
+
+- 左侧 Plaintext 明文编辑区
+- 右侧 STX1 Ciphertext 密文编辑区
+- 密码与确认密码输入框
+- Encrypt 加密按钮
+- Decrypt / Recover 解密恢复按钮
+- 打开明文文件 / 打开密文文件
+- 保存明文 / 保存密文
+- 复制明文 / 复制密文
+- 显示 / 隐藏密码
+- 状态提示
+
+GUI 只是界面层，底层仍调用 `veiltext_stx1_recovery.py` 中同一套 STX1 加密 / 解密函数，因此与命令行版使用完全相同的 STX1 v1 格式。
+
+## 命令行模式
+
+如果需要最简单、最长期稳定的备用方式，仍可以运行：
 
 ```powershell
 python veiltext_stx1_recovery.py
