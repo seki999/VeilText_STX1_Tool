@@ -50,6 +50,9 @@ TEXTS = {
         "plain_copied": "Plaintext copied",
         "cipher_copied": "Ciphertext copied",
         "cipher_pasted": "Ciphertext pasted",
+        "menu_copy": "Copy",
+        "menu_paste": "Paste",
+        "menu_select_all": "Select All",
     },
     "zh": {
         "window_title": "VeilText STX1 工具",
@@ -95,6 +98,9 @@ TEXTS = {
         "plain_copied": "明文已复制",
         "cipher_copied": "密文已复制",
         "cipher_pasted": "密文已粘贴",
+        "menu_copy": "复制",
+        "menu_paste": "粘贴",
+        "menu_select_all": "全选",
     },
 }
 
@@ -215,6 +221,9 @@ class VeilTextApp(tk.Tk):
         self.cipher_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         cipher_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
+        self._install_text_shortcuts(self.plain_text)
+        self._install_text_shortcuts(self.cipher_text)
+
         action_frame = ttk.Frame(main)
         action_frame.pack(fill=tk.X, pady=(10, 6))
 
@@ -267,6 +276,37 @@ class VeilTextApp(tk.Tk):
             anchor=tk.W,
             padding=(6, 3),
         ).pack(fill=tk.X, pady=(4, 0))
+
+    def _install_text_shortcuts(self, widget: tk.Text) -> None:
+        widget.bind("<Control-a>", lambda _e, w=widget: self._select_all(w))
+        widget.bind("<Control-A>", lambda _e, w=widget: self._select_all(w))
+        widget.bind("<Button-3>", lambda e, w=widget: self._show_text_menu(e, w))
+
+    def _select_all(self, widget: tk.Text):
+        widget.tag_add(tk.SEL, "1.0", "end-1c")
+        widget.mark_set(tk.INSERT, "1.0")
+        widget.see("1.0")
+        return "break"
+
+    def _show_text_menu(self, event, widget: tk.Text) -> None:
+        menu = tk.Menu(self, tearoff=False)
+        menu.add_command(
+            label=self._t("menu_copy"),
+            command=lambda: widget.event_generate("<<Copy>>"),
+        )
+        menu.add_command(
+            label=self._t("menu_paste"),
+            command=lambda: widget.event_generate("<<Paste>>"),
+        )
+        menu.add_separator()
+        menu.add_command(
+            label=self._t("menu_select_all"),
+            command=lambda: self._select_all(widget),
+        )
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
 
     def _on_language_change(self, _event=None) -> None:
         self._update_ui_text()
