@@ -1,0 +1,28 @@
+VeilText STX1 Recovery Test Notes
+
+建议你自己用当前 VeilText 创建一份永久测试数据。
+
+例如原文：
+
+这是 VeilText 长期恢复测试。
+Hello VeilText.
+こんにちは VeilText.
+Emoji: 🔐
+
+使用一个“仅供测试”的密码进行加密。
+
+然后把得到的完整 STX1:... 密文保存为：
+
+test_ciphertext.txt
+
+同时把上面的已知原文保存为：
+
+test_plaintext.txt
+
+以后换电脑、升级 Windows、重装 Python 或多年后重新恢复时，
+先运行本 Python 工具解密 test_ciphertext.txt。
+
+如果结果与 test_plaintext.txt 完全一致，
+就说明恢复工具和当前环境工作正常。
+
+注意：测试密码不要使用你的真实私人数据密码。
