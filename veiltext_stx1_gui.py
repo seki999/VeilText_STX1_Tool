@@ -12,7 +12,6 @@ TEXTS = {
         "language": "Language:",
         "password_frame": "Password",
         "password": "Password:",
-        "confirm": "Confirm:",
         "show_password": "Show password",
         "plaintext": "Plaintext",
         "ciphertext": "STX1 Ciphertext",
@@ -29,7 +28,6 @@ TEXTS = {
         "ready": "Ready",
         "plain_empty": "Plaintext is empty.",
         "password_empty": "Password is empty.",
-        "password_mismatch": "Password confirmation does not match.",
         "encrypt_ok": "Encryption completed successfully",
         "encrypt_failed": "Encryption failed",
         "cipher_empty": "Ciphertext is empty.",
@@ -60,7 +58,6 @@ TEXTS = {
         "language": "语言：",
         "password_frame": "密码",
         "password": "密码：",
-        "confirm": "确认密码：",
         "show_password": "显示密码",
         "plaintext": "明文",
         "ciphertext": "STX1 密文",
@@ -77,7 +74,6 @@ TEXTS = {
         "ready": "就绪",
         "plain_empty": "明文为空。",
         "password_empty": "密码为空。",
-        "password_mismatch": "两次输入的密码不一致。",
         "encrypt_ok": "加密成功",
         "encrypt_failed": "加密失败",
         "cipher_empty": "密文为空。",
@@ -113,7 +109,6 @@ class VeilTextApp(tk.Tk):
 
         self.language_var = tk.StringVar(value="简体中文")
         self.password_var = tk.StringVar()
-        self.confirm_var = tk.StringVar()
         self.show_password_var = tk.BooleanVar(value=False)
         self.status_var = tk.StringVar()
 
@@ -158,7 +153,6 @@ class VeilTextApp(tk.Tk):
         self.password_frame = ttk.LabelFrame(main, padding=10)
         self.password_frame.pack(fill=tk.X, pady=(0, 10))
         self.password_frame.columnconfigure(1, weight=1)
-        self.password_frame.columnconfigure(3, weight=1)
 
         self.password_label = ttk.Label(self.password_frame)
         self.password_label.grid(row=0, column=0, sticky=tk.W, padx=(0, 8))
@@ -168,24 +162,14 @@ class VeilTextApp(tk.Tk):
             textvariable=self.password_var,
             show="*",
         )
-        self.password_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, 16))
-
-        self.confirm_label = ttk.Label(self.password_frame)
-        self.confirm_label.grid(row=0, column=2, sticky=tk.W, padx=(0, 8))
-
-        self.confirm_entry = ttk.Entry(
-            self.password_frame,
-            textvariable=self.confirm_var,
-            show="*",
-        )
-        self.confirm_entry.grid(row=0, column=3, sticky=tk.EW, padx=(0, 12))
+        self.password_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, 12))
 
         self.show_password_check = ttk.Checkbutton(
             self.password_frame,
             variable=self.show_password_var,
             command=self._toggle_password_visibility,
         )
-        self.show_password_check.grid(row=0, column=4, sticky=tk.W)
+        self.show_password_check.grid(row=0, column=2, sticky=tk.W)
 
         body = ttk.Panedwindow(main, orient=tk.HORIZONTAL)
         body.pack(fill=tk.BOTH, expand=True)
@@ -317,7 +301,6 @@ class VeilTextApp(tk.Tk):
         self.language_label.configure(text=self._t("language"))
         self.password_frame.configure(text=self._t("password_frame"))
         self.password_label.configure(text=self._t("password"))
-        self.confirm_label.configure(text=self._t("confirm"))
         self.show_password_check.configure(text=self._t("show_password"))
         self.plain_frame.configure(text=self._t("plaintext"))
         self.cipher_frame.configure(text=self._t("ciphertext"))
@@ -336,12 +319,10 @@ class VeilTextApp(tk.Tk):
     def _toggle_password_visibility(self) -> None:
         show = "" if self.show_password_var.get() else "*"
         self.password_entry.configure(show=show)
-        self.confirm_entry.configure(show=show)
 
     def encrypt_text(self) -> None:
         plaintext = self.plain_text.get("1.0", "end-1c")
         password = self.password_var.get()
-        confirmation = self.confirm_var.get()
 
         if not plaintext:
             messagebox.showwarning("VeilText", self._t("plain_empty"))
@@ -349,10 +330,6 @@ class VeilTextApp(tk.Tk):
         if not password:
             messagebox.showwarning("VeilText", self._t("password_empty"))
             return
-        if password != confirmation:
-            messagebox.showerror("VeilText", self._t("password_mismatch"))
-            return
-
         try:
             ciphertext = encrypt_veiltext(plaintext, password)
             self.cipher_text.delete("1.0", tk.END)
@@ -494,7 +471,6 @@ class VeilTextApp(tk.Tk):
         self.plain_text.delete("1.0", tk.END)
         self.cipher_text.delete("1.0", tk.END)
         self.password_var.set("")
-        self.confirm_var.set("")
         self.status_var.set(self._t("ready"))
         self.password_entry.focus_set()
 
