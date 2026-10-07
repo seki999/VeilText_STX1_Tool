@@ -11,7 +11,7 @@ from urllib.parse import unquote, urlparse
 import markdown
 
 IMG_RE = re.compile(
-    r'(<img\\b[^>]*?\\bsrc\\s*=\\s*)(["\\\'])(.*?)(\\2)',
+    r"(<img\\b[^>]*?\\bsrc\\s*=\\s*)([\\\"'])(.*?)(\\2)",
     flags=re.IGNORECASE | re.DOTALL,
 )
 
