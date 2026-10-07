@@ -23,6 +23,91 @@
 4. 解密 / 恢复 STX1 文本文件
 5. 将结果保存为 UTF-8 文本文件
 
+
+## 私密 HTML 图文日记（VS Code）
+
+本仓库现在也可以作为一个本地 **Private HTML Diary** 工作流使用：
+
+```text
+VS Code 写 Markdown
+        ↓
+拖入图片
+        ↓
+Ctrl+Shift+V 图文预览
+        ↓
+Ctrl+Shift+B
+        ↓
+单文件 HTML（图片 Base64 内嵌）
+        ↓
+STX1 / AES-256-GCM 加密
+        ↓
+diary.stx1
+```
+
+第一次使用：
+
+```powershell
+.\journal\setup.ps1
+```
+
+之后打开：
+
+```text
+private-diary\diary.md
+```
+
+直接写文字，并把 JPG / PNG / WebP / GIF 图片拖进 VS Code Markdown 编辑区即可。
+
+### 导出单文件 HTML
+
+按：
+
+```text
+Ctrl + Shift + B
+```
+
+会把当前 Markdown 转为：
+
+```text
+xxx.single.html
+```
+
+所有本地图片都会转换成 Base64 并嵌入 HTML，因此 HTML 可以脱离 `images/` 文件夹独立打开。
+
+### 一键导出 + 加密
+
+在 VS Code 中执行：
+
+```text
+Terminal
+→ Run Task
+→ VeilText Diary: Export + Encrypt current Markdown
+```
+
+会：
+
+1. 生成单文件 HTML
+2. 要求输入并确认密码
+3. 使用现有 STX1 AES-256-GCM 加密 HTML
+4. 输出 `xxx.stx1`
+5. 删除临时生成的明文 `xxx.single.html`
+
+解密示例：
+
+```powershell
+.\.venv\Scripts\python.exe .\journal\decrypt_html.py .\private-diary\diary.stx1
+```
+
+正确输入密码后会恢复为 `diary.recovered.html`，Windows 下自动使用默认浏览器打开，文字和图片会一起显示。
+
+详细说明见：
+
+```text
+journal/README.md
+```
+
+> 安全提醒：Markdown 源文件和图片在编辑阶段仍然是明文。`private-diary/` 默认加入 `.gitignore`，避免误提交到公开 GitHub 仓库，但 Git 忽略本身不等于磁盘加密。对真正敏感的内容，应在确认加密文件可恢复后自行管理或删除明文材料。
+
 ## STX1 加密格式
 
 本工具严格对应现有 VeilText STX1：
