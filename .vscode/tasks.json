@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "VeilText Diary: Setup",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\journal\\setup.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "VeilText Diary: Export current Markdown to single HTML",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\journal\\export.ps1",
+        "${file}"
+      ],
+      "group": {"kind": "build", "isDefault": true},
+      "problemMatcher": []
+    },
+    {
+      "label": "VeilText Diary: Export + Encrypt current Markdown",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\journal\\export_and_encrypt.ps1",
+        "${file}"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
