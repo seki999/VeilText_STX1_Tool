@@ -1,0 +1,9 @@
+{
+  "markdown.copyFiles.destination": {
+    "/private-diary/**/*": "private-diary/images/"
+  },
+  "markdown.updateLinksOnFileMove.enabled": "always",
+  "editor.wordWrap": "on",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000
+}

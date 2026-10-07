@@ -10,7 +10,14 @@ dist/
 *.spec
 
 # IDE / OS
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# Private diary working data (never commit plaintext diary content)
+/private-diary/
+*.single.html
+*.recovered.html
